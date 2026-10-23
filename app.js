@@ -124,6 +124,10 @@
       pos: Object.fromEntries(POS.map((p) => [p[0], p[1]])),
       // translations → Wiktionary
       dictsExternal: "Dictionarios extèrnos", openNewTab: "Aprire en nòva fenèstra", isvDict: "Dictionario interslavo",
+      // compare words
+      compareWith: "Comparare con…", compareAdd: "Ajjóngere paraula…", compareLayout: "Comparatione",
+      compareSideBySide: "Ad lato", compareStacked: "Una sobto l'altra", compareRemove: "Eliminare de la comparatione",
+      compareScrollLeft: "A senestra", compareScrollRight: "A dèstera", compareNoConj: "Sene conjugatione.",
       // about
       navAbout: "Sopre la app", aboutTitle: "Sopre la app",
       aboutLead: "Dictionario de la lengua neolatina: paraulas en 13 lenguas, conjugatione de los vèrbos, intelligibilitate et commèntos de la communitate.",
@@ -195,6 +199,10 @@
       pos: Object.fromEntries(POS.map((p) => [p[0], p[2]])),
       // translations → Wiktionary
       dictsExternal: "External dictionaries", openNewTab: "Open in new tab", isvDict: "Interslavic dictionary",
+      // compare words
+      compareWith: "Compare with…", compareAdd: "Add word…", compareLayout: "Comparison layout",
+      compareSideBySide: "Side by side", compareStacked: "One below another", compareRemove: "Remove from comparison",
+      compareScrollLeft: "Scroll left", compareScrollRight: "Scroll right", compareNoConj: "No conjugation.",
       // about
       navAbout: "About the app", aboutTitle: "About the app",
       aboutLead: "Dictionary of the Neolatino language: words in 13 languages, verb conjugations, intelligibility and community comments.",
@@ -732,6 +740,8 @@
     if (!def) return;
     el.dataset.id = e.id;
     el.dataset.panel = key;
+    if (key !== "tr" && key !== "cj") compares.delete(e.id); // only translations and conjugation compare words
+    setComparing(el, false);
     el.innerHTML = "";
     try {
       await def.render(e, el, ctx);
@@ -747,18 +757,243 @@
     key: "tr",
     icon: ICONS.translations,
     label: () => t("translations"),
-    render(e, el, ctx) {
-      el.innerHTML = `<div class="word-section">${translationsHTML(e, ctx.li)}</div>${panelFooter("tr", e, ctx)}`;
-    },
+    render(e, el, ctx) { renderCompare(e, el, ctx, "tr"); },
   });
   hooks.panels.push({
     key: "cj",
     icon: ICONS.forms,
     label: () => t("conjugation"),
     available: (e) => e.isVerb && !!NLConj.conjugate(e.v[0]),
-    render(e, el, ctx) {
-      el.innerHTML = conjHTML(NLConj.conjugate(e.v[0])) + panelFooter("cj", e, ctx);
-    },
+    render(e, el, ctx) { renderCompare(e, el, ctx, "cj"); },
+  });
+
+  // ------------------------------------------------------------------ compare words (as in the Interslavic dictionary)
+  // "Comparare con…" above the translations or the conjugation: up to three more words next to
+  // the open one (four in all), side by side (the row scrolls sideways) or one below another.
+  const COMPARE_MAX = 3;
+  const compares = new Map(); // id of the open word → { ids: [compared ids], layout: "h" | "v" }
+  let compareDir = null; // { rev, l }: the compare box searches like the main box until changed
+
+  function compareDirection() {
+    if (!compareDir) {
+      const rev = S ? S.rev : store.get("nl-dir", "") === "nl";
+      const l = S ? S.l : store.get(rev ? "nl-output-lang" : "nl-input-lang", rev ? "eng" : "all");
+      compareDir = { rev, l: rev && (!(l in LANG_INDEX) || l === "lat") ? "eng" : l };
+    }
+    return compareDir;
+  }
+
+  const compareContent = (x, mode, li) => {
+    if (mode === "tr") return `<div class="word-section">${translationsHTML(x, li)}</div>`;
+    const c = x.isVerb ? NLConj.conjugate(x.v[0]) : null;
+    return c ? conjHTML(c) : `<p class="muted">${esc(t("compareNoConj"))}</p>`;
+  };
+
+  function compareLangsHTML() {
+    const dir = compareDirection();
+    const others = LANGS.filter((l) => l.code !== "lat").map((l) => [l.code, l[ui]]);
+    const select = `<select class="select select--small" data-compare-lang aria-label="${esc(dir.rev ? t("outputLang") : t("inputLang"))}">${
+      optionList(dir.rev ? others : [["all", t("allLangs")], ...others], dir.l)}</select>`;
+    const neo = `<span class="lang-selector__neo compare-search__neo">${esc(t("toNeo"))}</span>`;
+    const swap = `<button type="button" class="lang-selector__swap compare-search__swap${dir.rev ? " rotate" : ""}" data-compare-swap aria-label="${esc(t("swapDir"))}" title="${esc(t("swapDir"))}">${ICONS.swap}</button>`;
+    return dir.rev ? neo + swap + select : select + swap + neo;
+  }
+
+  function renderCompare(e, el, ctx, mode) {
+    el._ctx = ctx;
+    el._compareObserver?.disconnect();
+    const state = compares.get(e.id) || { ids: [], layout: "h" };
+    const others = state.ids.map((id) => D.byId.get(id)).filter(Boolean);
+    const n = others.length;
+    const layout = n ? (state.layout === "v" ? "vertical" : "horizontal") : "single";
+    const header = (x, i) => `<div class="column-header"><a href="#/word/${encodeURIComponent(x.id)}">${esc(x.v[0])}</a>${i >= 0
+      ? `<button type="button" class="column-close" data-compare-remove="${i}" aria-label="${esc(`${t("compareRemove")}: ${x.v[0]}`)}" title="${esc(t("compareRemove"))}">&times;</button>` : ""}</div>`;
+    const search = n < COMPARE_MAX ? `<div class="compare-search">
+        <div class="compare-search__controls">
+          <input class="compare-search__input" type="search" autocomplete="off" spellcheck="false" autocapitalize="off"
+            placeholder="${esc(n ? t("compareAdd") : t("compareWith"))}" aria-label="${esc(n ? t("compareAdd") : t("compareWith"))}"
+            role="combobox" aria-expanded="false" aria-autocomplete="list">
+          <div class="compare-search__langs">${compareLangsHTML()}</div>
+        </div>
+        <ul class="compare-search__suggestions" role="listbox" hidden></ul>
+      </div>` : "";
+    const toggle = n ? `<div class="layout-toggle" role="group" aria-label="${esc(t("compareLayout"))}">${[["h", "↔", "compareSideBySide"], ["v", "↕", "compareStacked"]].map(([v, icon, k]) =>
+      `<button type="button" class="layout-toggle-btn" data-compare-layout="${v}" aria-pressed="${state.layout === v}" title="${esc(t(k))}" aria-label="${esc(t(k))}">${icon}</button>`).join("")}</div>` : "";
+    el.innerHTML = `<div class="compare-root" data-mode="${mode}">
+        <div class="compare-header">${search}${toggle}</div>
+        <div class="compare-scroller">
+          <div class="compare-columns compare-columns--${layout} compare-columns--${mode}">
+            <div class="compare-column">${n ? header(e, -1) : ""}${compareContent(e, mode, ctx.li)}</div>
+            ${others.map((x, i) => `<div class="compare-column">${header(x, i)}${compareContent(x, mode, ctx.li)}</div>`).join("")}
+          </div>
+          <button type="button" class="compare-scroller__arrow compare-scroller__arrow--start" data-compare-scroll="-1" aria-label="${esc(t("compareScrollLeft"))}" title="${esc(t("compareScrollLeft"))}">‹</button>
+          <button type="button" class="compare-scroller__arrow compare-scroller__arrow--end" data-compare-scroll="1" aria-label="${esc(t("compareScrollRight"))}" title="${esc(t("compareScrollRight"))}">›</button>
+        </div>
+      </div>${n ? "" : panelFooter(mode, e, ctx)}`; // "share as image" for the word alone
+    setComparing(el, n > 0);
+    // side by side: faded edges and arrows when the columns don't fit
+    const row = el.querySelector(".compare-columns--horizontal");
+    if (row) {
+      const box = row.parentElement;
+      const update = () => {
+        const max = row.scrollWidth - row.clientWidth;
+        box.classList.toggle("compare-scroller--start", row.scrollLeft > 2);
+        box.classList.toggle("compare-scroller--end", row.scrollLeft < max - 2);
+      };
+      row.addEventListener("scroll", update, { passive: true });
+      if (typeof ResizeObserver !== "undefined") {
+        el._compareObserver = new ResizeObserver(update);
+        el._compareObserver.observe(row);
+        [...row.children].forEach((c) => el._compareObserver.observe(c));
+      }
+      requestAnimationFrame(update);
+    }
+  }
+
+  /** While comparing, the card (narrow screens) or the side pane (wide) takes more room. */
+  function setComparing(el, on) {
+    const card = el.closest(".results-card");
+    if (el.closest("#word-panel")) el.closest(".dictionary-page")?.classList.toggle("dictionary-page--comparing", on);
+    else card?.classList.toggle("comparing", on);
+  }
+
+  function rerenderCompare(el) {
+    const e = D.byId.get(el.dataset.id);
+    if (e) renderCompare(e, el, el._ctx || {}, el.dataset.panel);
+  }
+
+  function compareSuggestions(input) {
+    const root = input.closest(".compare-root");
+    const el = root.closest(".results-card__details");
+    const list = root.querySelector(".compare-search__suggestions");
+    const q = input.value.trim();
+    const close = () => { list.hidden = true; list.innerHTML = ""; input.setAttribute("aria-expanded", "false"); };
+    if (q.length < 2) { close(); return; }
+    const dir = compareDirection();
+    const mode = root.dataset.mode;
+    const taken = new Set([el.dataset.id, ...((compares.get(el.dataset.id) || {}).ids || [])]);
+    const found = [];
+    for (const r of search({ q, rev: dir.rev, l: dir.l, m: "start" })) {
+      if (taken.has(r.e.id)) continue;
+      if (mode === "cj" && !(r.e.isVerb && NLConj.conjugate(r.e.v[0]))) continue;
+      found.push(r);
+      if (found.length >= 20) break;
+    }
+    if (!found.length) { close(); return; }
+    const qn = norm(q);
+    // the same word more than once: show what tells the rows apart (category, else topic)
+    const groups = new Map();
+    for (const r of found) groups.set(r.e.v[0], [...(groups.get(r.e.v[0]) || []), r.e]);
+    const metaOf = (x) => {
+      const twins = groups.get(x.v[0]);
+      if (twins.length < 2) return "";
+      const key = ["cat", "t3", "t2", "t1"].find((k) => new Set(twins.map((y) => y[k])).size > 1);
+      return key ? x[key] : "";
+    };
+    list.innerHTML = found.map((r, i) => {
+      const gi = dir.rev ? LANG_INDEX[dir.l] : (r.li > 0 ? r.li : LANG_INDEX.eng);
+      const meta = metaOf(r.e);
+      return `<li role="option" id="cmp-${el.dataset.id}-${i}" class="compare-search__item" data-compare-add="${esc(r.e.id)}" aria-selected="${i === 0}">
+        <span class="compare-search__word">${r.li === 0 ? highlight(r.e.v[0], qn) : esc(r.e.v[0])}${meta ? `<span class="compare-search__meta">${esc(meta)}</span>` : ""}</span>
+        <span class="compare-search__translate">${r.li === gi ? highlight(r.e.v[gi] || "", qn) : esc(r.e.v[gi] || "")}</span></li>`;
+    }).join("");
+    list.hidden = false;
+    input.setAttribute("aria-expanded", "true");
+  }
+
+  function addCompare(el, id) {
+    const state = compares.get(el.dataset.id) || { ids: [], layout: "h" };
+    if (state.ids.length >= COMPARE_MAX || state.ids.includes(id) || id === el.dataset.id) return;
+    state.ids.push(id);
+    compares.set(el.dataset.id, state);
+    rerenderCompare(el);
+    // keep typing: the next word goes in the same box
+    el.querySelector(".compare-search__input")?.focus({ preventScroll: true });
+  }
+
+  let compareTimer = null;
+  document.addEventListener("input", (ev) => {
+    const input = ev.target.closest(".compare-search__input");
+    if (!input) return;
+    clearTimeout(compareTimer);
+    compareTimer = setTimeout(() => compareSuggestions(input), 150);
+  });
+  document.addEventListener("change", (ev) => {
+    const select = ev.target.closest("[data-compare-lang]");
+    if (!select) return;
+    compareDirection().l = select.value;
+    compareSuggestions(select.closest(".compare-root").querySelector(".compare-search__input"));
+  });
+  document.addEventListener("keydown", (ev) => {
+    const input = ev.target.closest(".compare-search__input");
+    if (!input) return;
+    const list = input.closest(".compare-search").querySelector(".compare-search__suggestions");
+    const items = [...list.querySelectorAll("[data-compare-add]")];
+    const at = items.findIndex((x) => x.getAttribute("aria-selected") === "true");
+    if ((ev.key === "ArrowDown" || ev.key === "ArrowUp") && items.length && !list.hidden) {
+      ev.preventDefault();
+      const next = (at + (ev.key === "ArrowDown" ? 1 : -1) + items.length) % items.length;
+      items.forEach((x, i) => x.setAttribute("aria-selected", String(i === next)));
+      items[next].scrollIntoView({ block: "nearest" });
+      input.setAttribute("aria-activedescendant", items[next].id);
+    } else if (ev.key === "Enter" && items.length && !list.hidden) {
+      ev.preventDefault();
+      addCompare(input.closest(".results-card__details"), (items[at] || items[0]).dataset.compareAdd);
+    } else if (ev.key === "Escape" && !list.hidden) {
+      ev.stopPropagation();
+      list.hidden = true;
+      input.setAttribute("aria-expanded", "false");
+    }
+  });
+  document.addEventListener("mousedown", (ev) => {
+    // a click outside the box closes its suggestions
+    document.querySelectorAll(".compare-search__suggestions:not([hidden])").forEach((list) => {
+      if (!list.closest(".compare-search").contains(ev.target)) { list.hidden = true; list.previousElementSibling?.querySelector("input")?.setAttribute("aria-expanded", "false"); }
+    });
+  });
+  document.addEventListener("click", (ev) => {
+    const root = ev.target.closest(".compare-root");
+    if (!root) return;
+    const el = root.closest(".results-card__details");
+    const add = ev.target.closest("[data-compare-add]");
+    if (add) { addCompare(el, add.dataset.compareAdd); return; }
+    const remove = ev.target.closest("[data-compare-remove]");
+    if (remove) {
+      const state = compares.get(el.dataset.id);
+      if (state) state.ids.splice(Number(remove.dataset.compareRemove), 1);
+      if (state && !state.ids.length) compares.delete(el.dataset.id);
+      rerenderCompare(el);
+      return;
+    }
+    const layout = ev.target.closest("[data-compare-layout]");
+    if (layout) {
+      const state = compares.get(el.dataset.id);
+      if (state) { state.layout = layout.dataset.compareLayout; rerenderCompare(el); }
+      return;
+    }
+    if (ev.target.closest("[data-compare-swap]")) {
+      const dir = compareDirection();
+      if (dir.rev) dir.l = dir.l || "all";
+      else if (dir.l === "all") dir.l = "eng";
+      dir.rev = !dir.rev;
+      root.querySelector(".compare-search__langs").innerHTML = compareLangsHTML();
+      compareSuggestions(root.querySelector(".compare-search__input"));
+      return;
+    }
+    const arrow = ev.target.closest("[data-compare-scroll]");
+    if (arrow) {
+      // to the next / previous column that isn't fully visible
+      const row = root.querySelector(".compare-columns--horizontal");
+      if (!row) return;
+      const dirn = Number(arrow.dataset.compareScroll);
+      const left = row.getBoundingClientRect().left;
+      const view = { start: row.scrollLeft, end: row.scrollLeft + row.clientWidth };
+      const cols = [...row.children].map((c) => { const r = c.getBoundingClientRect(); const start = r.left - left + row.scrollLeft; return { start, end: start + r.width }; });
+      let target;
+      if (dirn > 0) target = cols.find((c) => c.end > view.end + 2)?.start;
+      else { const prev = [...cols].reverse().find((c) => c.start < view.start - 2); target = prev && Math.min(prev.start, prev.end - row.clientWidth); }
+      row.scrollTo({ left: target ?? row.scrollLeft + dirn * row.clientWidth * 0.8, behavior: "smooth" });
+    }
   });
 
   function translationsHTML(e, li) {
@@ -972,6 +1207,8 @@
     const open = forceOpen ?? card.dataset.open !== key;
     card.querySelectorAll("[data-tab]").forEach((b) => b.setAttribute("aria-pressed", String(open && b.dataset.tab === key)));
     if (!open) {
+      compares.delete(card.dataset.id);
+      card.classList.remove("comparing");
       delete card.dataset.open;
       details.hidden = true;
       details.innerHTML = "";
@@ -986,6 +1223,7 @@
 
   function select(id, tab, explicit) {
     clearTimeout(previewTimer);
+    if (sel.id && sel.id !== id) compares.delete(sel.id); // another word in the pane: compare afresh
     sel = { id, tab: tab || "tr", explicit: !!explicit };
     renderPanel();
     syncCards();
@@ -1004,6 +1242,7 @@
     if (!panel) return;
     const e = sel.id ? D.byId.get(sel.id) : null;
     if (!e) {
+      panel.closest(".dictionary-page")?.classList.remove("dictionary-page--comparing");
       panel.className = "word-panel word-panel--empty";
       const query = document.getElementById("f-q")?.value.trim();
       panel.innerHTML = `<div class="word-panel__placeholder"><span class="word-panel__placeholder-icon" aria-hidden="true">📖</span><p>${esc(query ? t("noResults") : t("placeholder"))}</p></div>`;
@@ -1199,6 +1438,8 @@
     }
     lastResults = search(S);
     shown = 0;
+    // narrow screens: the cards are drawn again, closed; wide: the pane keeps its word and comparison
+    for (const id of [...compares.keys()]) if (!isWide() || id !== sel.id) compares.delete(id);
     if (!lastResults.length) {
       box.innerHTML = `<div class="results-empty"><h2>${esc(t("noResults"))}</h2><p>${esc(t("noResultsHint"))}</p></div>`;
       select(null, "tr", false);
@@ -1234,6 +1475,7 @@
   function renderWord(id, params = {}) {
     const e = D.byId.get(id);
     if (!e) { view().innerHTML = `<div class="results-empty"><h2>${esc(t("noResults"))}</h2></div>`; return; }
+    compares.clear(); // a word page starts without comparisons
     const syn = (D.bySem.get(e.sem) || []).filter((x) => x !== e);
     const hom = (D.byLemma.get(norm(e.key)) || []).filter((x) => x !== e && !syn.includes(x));
     const li = S && S.l && S.l !== "all" && S.l !== "lat" ? LANG_INDEX[S.l] : null;

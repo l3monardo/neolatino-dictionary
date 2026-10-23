@@ -30,6 +30,14 @@ instead of overlapping.
 - A–Z browsing (`#/browse/a`), word pages (`#/word/<ID>`), verb conjugations for every verb.
 - Share a word's link: the share sheet on phones, copied to the clipboard on computers.
 - Share as image (1080 px PNG with a QR code): translations, conjugation, intelligibility.
+- **Comparare con…**, as in the Interslavic dictionary: a search box above a word's translations or
+  conjugation adds up to three more words (four in all), each in its own column with × to remove
+  it. The box searches like the main one (any language → Neolatino, or ⇄ Neolatino → a language),
+  with arrow keys and Enter; in the conjugation only verbs are offered. Side by side (↔) the row
+  scrolls sideways with arrows when it doesn't fit; one below another (↕) suits phones. While
+  comparing, the card widens (on wide screens the result list narrows and the side pane takes the
+  rest). The comparison stays when switching between translations and conjugation, and ends with
+  another tab, another word or a new search.
 - **Translations link to Wiktionary**, as in the Interslavic dictionary: each word of a natural
   language opens a small menu (*Dictionarios extèrnos*) → *Wiktionary* shows the word's page from the
   Wiktionary in that language under the table (Portuguese → pt.wiktionary.org, Sardinian →
@@ -123,7 +131,7 @@ tools/          conjugation data export and tests (not needed on the server)
 8. Open `https://gleb.onl/neolatino/#/profile` — both sign-in buttons should appear.
 
 **Updating later:** Hostinger's CDN tells browsers to keep CSS and JS for a week. `index.html` loads
-them as `app.js?v=20261023` etc.: after uploading changed files, change that `v=` value (all five
+them as `app.js?v=20261023b` etc.: after uploading changed files, change that `v=` value (all five
 places) and upload `index.html` too — every browser then loads the new files at once, and the About
 page shows the new version. The `neolatino/.htaccess` asks browsers to check for newer files on each
 visit as well. `sw.js` needs no change: installed apps pick up the new files the next time they open
@@ -160,7 +168,7 @@ ending, with a note). `node tools/build-conjugator.js` rebuilds `conjugator.js`;
 - **Neolatino interface strings** (`STR.nl` in `app.js`, the `nl:` blocks in `community.js` and
   `share.js`), especially the newest: the install steps (*Pòne lo dictionario sopre lo escrano de
   inítio…*, *Tocca lo bottone Compartire…*), *Sopre la app* (*Desveloppato per*, *Basato sopre uno
-  fork del Dictionario Interslavo*, *Còdice fònte*), *Estatística de las paraulas*, *Dictionarios
+  fork del Dictionario Interslavo*, *Còdice fònte*), *Estatística de las paraulas*, *Comparare con… / Ajjóngere paraula… / Una sobto l'altra*, *Dictionarios
   extèrnos*, *Aprire en nòva fenèstra*, and the older *Tèma claro / Tèma obscuro*, *Actualizzare*, *Votare*,
   *Cambiare voto*, *Voto salvato / retirato*, *Tuos votos se contan per toa lengua nativa*,
   *Non pòtes votare tuo commènto*. The vocabulary was checked against the dictionary (*paraula*, *commènto*, *voto*,
