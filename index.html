@@ -7,6 +7,14 @@
   <meta name="description" content="Dictionario Neolatino — cercare paraulas en 13 lenguas, navigare per léttera, conjugare vèrbos, votare la intelligibilitate.">
   <meta name="theme-color" content="#a3142b">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="icons/icon-192.png" sizes="192x192" type="image/png">
+  <!-- installable web app: manifest + service worker (sw.js) -->
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Neolatino">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <script>
     // light / dark before the first paint: the saved choice, else the system's
     (function () {
@@ -19,7 +27,7 @@
     })();
   </script>
   <!-- ?v=…: change it whenever you upload new files, so browsers and the CDN load them at once -->
-  <link rel="stylesheet" href="styles.css?v=20261022b">
+  <link rel="stylesheet" href="styles.css?v=20261023">
 </head>
 <body>
   <a class="skip" href="#main" data-i18n="skip">Saltare al contento</a>
@@ -35,6 +43,9 @@
     <div class="header__feeds">
       <a class="feed-link" href="#/browse/a" data-nav="browse" data-i18n-title="navBrowse">
         <span class="feed-link__icon" aria-hidden="true">🔤</span><span class="feed-link__text" data-i18n="navBrowse">Alphabeto</span>
+      </a>
+      <a class="feed-link" href="#/lookups" data-nav="lookups" data-i18n-title="navLookups">
+        <span class="feed-link__icon" aria-hidden="true">🔎</span><span class="feed-link__text" data-i18n="navLookups">Últimas consultationes</span>
       </a>
       <a class="feed-link" href="#/activity" data-nav="activity" data-i18n-title="navActivity">
         <span class="feed-link__icon" aria-hidden="true">🕒</span><span class="feed-link__text" data-i18n="navActivity">Última activitate</span>
@@ -61,16 +72,17 @@
     <ul class="foot-links">
       <li><span data-i18n="footData">Datos</span>: <a href="https://neolatino.eu/" rel="noopener">Vía Neolatina</a></li>
       <li><a href="https://neolatino.eu/ferramentos.html" rel="noopener" data-i18n="footConj">Conjugatore officiale</a></li>
-      <li><a href="https://github.com/neolatino/dictionario" rel="noopener">GitHub</a></li>
+      <li><a href="https://github.com/l3monardo/neolatino-dictionary" rel="noopener">GitHub</a></li>
+      <li><a href="#/about" data-i18n="navAbout">Sopre la app</a></li>
     </ul>
     <p id="data-status"></p>
   </footer>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-  <script src="conjugator.js?v=20261022b"></script>
-  <script src="app.js?v=20261022b"></script>
-  <script src="community.js?v=20261022b"></script>
-  <script src="share.js?v=20261022b"></script>
+  <script src="conjugator.js?v=20261023"></script>
+  <script src="app.js?v=20261023"></script>
+  <script src="community.js?v=20261023"></script>
+  <script src="share.js?v=20261023"></script>
 </body>
 </html>

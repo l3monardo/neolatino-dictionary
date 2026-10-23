@@ -33,6 +33,7 @@ $routes = [
     'community/about' => 'route_about',
     'community/avatar' => 'route_avatar',
     'community/lookup' => 'route_lookup',
+    'community/wordstats' => 'route_word_stats',
     'community/counts' => 'route_counts',
 ];
 

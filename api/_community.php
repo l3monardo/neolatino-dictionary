@@ -21,6 +21,7 @@
  * PUT    community/avatar                       { image: base64 JPEG / PNG / WebP, ≤ 200 KB }
  * DELETE community/avatar
  * POST   community/lookup                       { items: [{ id, word }] }  count opened words (anyone)
+ * GET    community/wordstats[?period=30|7]      the 50 newest lookups + the 50 most looked-up words (public)
  * GET    community/counts?ids=1,2,3             comment and vote counts for a page of results
  */
 declare(strict_types=1);
@@ -54,6 +55,7 @@ const AVATAR_MAX_BYTES = 204800;
 const LOOKUP_BATCH = 20;
 const LOOKUP_REPEAT_MINUTES = 30;
 const LOOKUP_HOURLY_CAP = 300;
+const STATS_LIST = 50;
 
 /* ── language profile ─────────────────────────────────────────── */
 
@@ -826,6 +828,48 @@ function route_lookup(): void
     }
 
     send_json(['counted' => $counted]);
+}
+
+/**
+ * "50 últimas consultationes" and "Las paraulas mais cercatas": the words opened most
+ * recently and most often (all time, or the last 30 / 7 days). Counts only, no names.
+ */
+function route_word_stats(): void
+{
+    if (method() !== 'GET') {
+        fail('method not allowed', 405);
+    }
+
+    $period = (string) ($_GET['period'] ?? 'all');
+    $days = ['30' => 30, '7' => 7][$period] ?? null;
+
+    $latest = rows('SELECT word_id, word, lookups, last_at FROM ' . t('word_stats') . '
+                    ORDER BY last_at DESC LIMIT ' . STATS_LIST);
+
+    if ($days) {
+        $top = rows('SELECT l.word_id, s.word, COUNT(*) AS lookups
+                     FROM ' . t('lookups') . ' l JOIN ' . t('word_stats') . ' s ON s.word_id = l.word_id
+                     WHERE l.created_at > UTC_TIMESTAMP(6) - INTERVAL ' . $days . ' DAY
+                     GROUP BY l.word_id, s.word ORDER BY lookups DESC, s.word ASC LIMIT ' . STATS_LIST);
+        $totals = row('SELECT COUNT(*) AS lookups, COUNT(DISTINCT word_id) AS words FROM ' . t('lookups') . '
+                       WHERE created_at > UTC_TIMESTAMP(6) - INTERVAL ' . $days . ' DAY');
+    } else {
+        $top = rows('SELECT word_id, word, lookups FROM ' . t('word_stats') . '
+                     ORDER BY lookups DESC, word ASC LIMIT ' . STATS_LIST);
+        $totals = row('SELECT COALESCE(SUM(lookups), 0) AS lookups, COUNT(*) AS words FROM ' . t('word_stats'));
+    }
+
+    send_json([
+        'period' => $days ? (string) $days : 'all',
+        'latest' => array_map(fn ($entry) => [
+            'wordId' => $entry['word_id'], 'word' => $entry['word'],
+            'lookups' => (int) $entry['lookups'], 'at' => iso($entry['last_at']),
+        ], $latest),
+        'top' => array_map(fn ($entry) => [
+            'wordId' => $entry['word_id'], 'word' => $entry['word'], 'lookups' => (int) $entry['lookups'],
+        ], $top),
+        'totals' => ['lookups' => (int) ($totals['lookups'] ?? 0), 'words' => (int) ($totals['words'] ?? 0)],
+    ], 200, 'public, max-age=60');
 }
 
 /** Comment and vote counts for the words on a results page (one request instead of fifty). */

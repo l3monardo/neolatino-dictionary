@@ -23,6 +23,11 @@
   NL.addStrings({
     nl: {
       navActivity: "Última activitate", activityTitle: "Última activitate",
+      navLookups: "Últimas consultationes", lookupsMenu: "Consultationes", statsTitle: "Estatística de las paraulas",
+      statsHint: "Las paraulas apèrtas en lo dictionario per totos los visitantes, sene nomes.",
+      lastLookups: "50 últimas consultationes", topLookups: "Las paraulas mais cercatas",
+      periodAll: "Sèmpre", period30: "30 días", period7: "7 días", statsWords: "Paraulas",
+      lookupsEmpty: "Ancora sene consultationes.",
       signIn: "Entrar", signOut: "Sortire",
       signInTitle: "Entrar en lo dictionario",
       signInWhy: "Entra per votare la intelligibilitate, commentare et salvare tuos preferitos et toa història en totos tuos apparecclos.",
@@ -73,6 +78,11 @@
     },
     en: {
       navActivity: "Latest activity", activityTitle: "Latest activity",
+      navLookups: "Last lookups", lookupsMenu: "Lookups", statsTitle: "Word statistics",
+      statsHint: "How often words were opened in the dictionary — all visitors, no names.",
+      lastLookups: "50 latest lookups", topLookups: "Most looked-up words",
+      periodAll: "All time", period30: "30 days", period7: "7 days", statsWords: "Words",
+      lookupsEmpty: "No lookups yet.",
       signIn: "Sign in", signOut: "Sign out",
       signInTitle: "Sign in to the dictionary",
       signInWhy: "Sign in to vote on intelligibility, comment, and keep your favourites and history on all your devices.",
@@ -431,6 +441,7 @@
   });
   hooks.menu.push(
     { name: "activity", icon: "🕒", label: () => t("activityTitle"), href: "#/activity", order: 40 },
+    { name: "lookups", icon: "📊", label: () => t("lookupsMenu"), href: "#/lookups", order: 45 },
     { name: "users", icon: "👥", label: () => t("usersTitle"), href: "#/users", order: 50 },
     { name: "profile", icon: "⭐", label: () => (state.user ? t("profile") : t("signIn")), href: "#/profile", order: 60 },
   );
@@ -1449,11 +1460,85 @@
     await refresh(false);
   }
 
+  /* ── word statistics: 50 latest lookups | most looked-up words ─ */
+  let lookupsColumn = "latest";
+  let lookupsPeriod = "all";
+  async function renderLookups(container) {
+    const periods = [["all", "periodAll"], ["30", "period30"], ["7", "period7"]];
+    container.innerHTML = `<div class="page page--wide stats-page">
+        <div class="page-head"><h1 class="page-title">📊 ${esc(t("statsTitle"))}</h1>
+          <button type="button" class="pill-btn" data-refresh>↻ ${esc(t("refresh"))}</button></div>
+        <p class="page-hint stats-page__hint">${esc(t("statsHint"))}</p>
+        <p class="form-error" data-error></p>
+        <div class="stats-page__switch"><div class="tabs-row stats-page__tabs" role="tablist">
+          <button type="button" role="tab" data-column="latest" aria-selected="${lookupsColumn === "latest"}">🕘 ${esc(t("lastLookups"))}</button>
+          <button type="button" role="tab" data-column="top" aria-selected="${lookupsColumn === "top"}">🏆 ${esc(t("topLookups"))}</button>
+        </div></div>
+        <div class="stats-page__columns" data-column="${lookupsColumn}">
+          <section class="card stats-page__column stats-page__column--latest">
+            <h2 class="stats-page__column-title">🕘 ${esc(t("lastLookups"))}</h2>
+            <ol class="stats-page__latest" data-list="latest"><li class="page-hint">…</li></ol>
+          </section>
+          <section class="card stats-page__column stats-page__column--top">
+            <h2 class="stats-page__column-title">🏆 ${esc(t("topLookups"))}</h2>
+            <div class="seg-toggle stats-page__periods" role="group" aria-label="${esc(t("topLookups"))}">${periods.map(([v, k]) =>
+              `<button type="button" data-period="${v}" aria-pressed="${v === lookupsPeriod}">${esc(t(k))}</button>`).join("")}</div>
+            <p class="stats-page__totals" data-totals></p>
+            <ol class="stats-page__top" data-list="top"></ol>
+          </section>
+        </div>
+      </div>`;
+    const latest = container.querySelector('[data-list="latest"]');
+    const top = container.querySelector('[data-list="top"]');
+    const totals = container.querySelector("[data-totals]");
+    const error = container.querySelector("[data-error]");
+    // the word as the dictionary writes it now (the server keeps the spelling of the last lookup)
+    const wordOf = (entry) => (NL.D.byId.get(String(entry.wordId)) || { v: [entry.word] }).v[0] || entry.word;
+    let request = 0;
+    async function load() {
+      const current = ++request;
+      top.classList.add("loading");
+      error.textContent = "";
+      try {
+        const data = await api("community/wordstats", { params: lookupsPeriod === "all" ? {} : { period: lookupsPeriod } });
+        if (current !== request) return;
+        latest.innerHTML = data.latest.length ? data.latest.map((entry) => `<li>
+            ${wordChip(entry.wordId, wordOf(entry))}
+            <span class="stats-page__times" title="${esc(t("statsLookups"))}">🔎 ${entry.lookups}</span>
+            ${when(entry.at, "stats-page__time")}</li>`).join("") : `<li class="page-hint">${esc(t("lookupsEmpty"))}</li>`;
+        const most = Math.max(1, ...data.top.map((entry) => entry.lookups));
+        totals.innerHTML = `<span>🔎 ${esc(t("statsLookups"))}: <strong>${NL.fmt(data.totals.lookups)}</strong></span>
+          <span>📖 ${esc(t("statsWords"))}: <strong>${NL.fmt(data.totals.words)}</strong></span>`;
+        top.innerHTML = data.top.length ? data.top.map((entry, i) => `<li>
+            <span class="stats-page__rank${i < 3 ? " medal" : ""}">${i + 1}</span>
+            ${wordChip(entry.wordId, wordOf(entry))}
+            <span class="stats-page__bar" aria-hidden="true"><span style="width:${Math.max(4, (entry.lookups / most) * 100)}%"></span></span>
+            <span class="stats-page__count">${NL.fmt(entry.lookups)}</span></li>`).join("") : `<li class="page-hint">${esc(t("lookupsEmpty"))}</li>`;
+      } catch (e) {
+        if (current === request) error.textContent = errorText(e);
+      } finally {
+        if (current === request) top.classList.remove("loading");
+      }
+    }
+    container.querySelector("[data-refresh]").addEventListener("click", load);
+    container.querySelectorAll("[data-column]").forEach((b) => b.addEventListener("click", () => {
+      lookupsColumn = b.dataset.column;
+      container.querySelector(".stats-page__columns").dataset.column = lookupsColumn;
+      container.querySelectorAll("button[data-column]").forEach((x) => x.setAttribute("aria-selected", String(x === b)));
+    }));
+    container.querySelectorAll("[data-period]").forEach((b) => b.addEventListener("click", () => {
+      lookupsPeriod = b.dataset.period;
+      container.querySelectorAll("[data-period]").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+      load();
+    }));
+    await load();
+  }
+
   /* ── routes ────────────────────────────────────────────────── */
   const ready = boot();
   const page = (fn) => async (parts, params, info) => {
     const v = NL.view();
-    if (info && info.dataRefresh && v.querySelector(".profile-page, .user-detail, .users-page, .activity-page")) return;
+    if (info && info.dataRefresh && v.querySelector(".profile-page, .user-detail, .users-page, .activity-page, .stats-page")) return;
     if (!state.booted) v.innerHTML = `<p class="loading">…</p>`;
     await ready;
     window.scrollTo(0, 0);
@@ -1463,4 +1548,5 @@
   hooks.routes.user = page((v, parts) => renderUser(v, parts[1]));
   hooks.routes.users = page((v) => renderUsers(v));
   hooks.routes.activity = page((v) => renderActivity(v));
+  hooks.routes.lookups = page((v) => renderLookups(v));
 })();

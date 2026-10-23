@@ -1,0 +1,41 @@
+{
+  "name": "Dictionario Neolatino",
+  "short_name": "Neolatino",
+  "description": "Dictionario Neolatino — paraulas en 13 lenguas, conjugatione de los vèrbos, intelligibilitate et commèntos.",
+  "lang": "art-x-neolatino",
+  "dir": "ltr",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f4f2f5",
+  "theme_color": "#a3142b",
+  "categories": ["education", "books", "reference"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Alphabeto", "url": "./#/browse/a", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Conjugatore", "url": "./#/verb", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Últimas consultationes", "url": "./#/lookups", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] }
+  ],
+  "screenshots": [
+    {
+      "src": "screenshots/wide.png",
+      "sizes": "1280x800",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Dictionario Neolatino on a computer"
+    },
+    {
+      "src": "screenshots/narrow.png",
+      "sizes": "780x1688",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Dictionario Neolatino on a phone"
+    }
+  ]
+}

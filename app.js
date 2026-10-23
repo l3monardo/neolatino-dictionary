@@ -21,6 +21,14 @@
   });
 
   // ------------------------------------------------------------------ config
+  // the version is the ?v= of app.js in index.html ("20261023" → 2026-10-23), shown on the About page
+  const APP_VERSION = (() => {
+    try {
+      const v = new URL(document.currentScript.src).searchParams.get("v") || "";
+      const m = v.match(/^(\d{4})(\d\d)(\d\d)(.*)$/);
+      return m ? `${m[1]}-${m[2]}-${m[3]}${m[4] ? " " + m[4] : ""}` : v;
+    } catch { return ""; }
+  })();
   const CONFIG = {
     dataUrls: [
       "https://docs.google.com/spreadsheets/d/e/2PACX-1vSGCRUv8z5VSCk7lBy_4gtH2PkFvMH5ny65qauUmYzqWinGEw23IAQT_1seyBGfqw/pub?gid=1315031947&single=true&output=csv",
@@ -114,6 +122,34 @@
       moods: { indicativo: "indicativo", subjunctivo: "subjunctivo", conditionale: "conditionale", imperativo: "imperativo" },
       tenses: { p_i: "presènte", pi_i: "pass. imperf.", pr_i: "pass. remoto", f_i: "futuro", p_s: "presènte", pi_s: "pass. imperf.", p1_c: "presènte I", p2_c: "presènte II", imp: "" },
       pos: Object.fromEntries(POS.map((p) => [p[0], p[1]])),
+      // translations → Wiktionary
+      dictsExternal: "Dictionarios extèrnos", openNewTab: "Aprire en nòva fenèstra", isvDict: "Dictionario interslavo",
+      // about
+      navAbout: "Sopre la app", aboutTitle: "Sopre la app",
+      aboutLead: "Dictionario de la lengua neolatina: paraulas en 13 lenguas, conjugatione de los vèrbos, intelligibilitate et commèntos de la communitate.",
+      aboutDeveloper: "Desveloppato per", aboutBasedOn: "Basato sopre", aboutFork: "uno fork del Dictionario Interslavo",
+      aboutSource: "Còdice fònte", aboutData: "Datos", aboutOriginal: "Dictionario originale", aboutVersion: "Versione",
+      // install
+      installApp: "Installare lo dictionario", installNow: "Installare",
+      installIntro: "Pòne lo dictionario sopre lo escrano de inítio: se apre en una fenèstra pròpria, como una applicatione, et functiona inclusive sene connexione.",
+      installTabIos: "iPhone / iPad", installTabAndroid: "Android", installTabDesktop: "Computatore",
+      installSteps: {
+        ios: [
+          "Tocca lo bottone Compartire (uno quadrato con una flèccîa ↑). En Safari èst abbasso en lo escrano aut en lo menu •••.",
+          "Descènde et elège «Add to Home Screen» (en la lengua de too telèfono).",
+          "Tocca «Add»: la icòna del dictionario appare sopre lo escrano de inítio.",
+        ],
+        android: [
+          "Apri lo menu ⋮ del navigatore (en alto a la dèstera en Chrome).",
+          "Elège «Install app» aut «Add to Home screen».",
+          "Confirma: lo dictionario appare entre las applicationes.",
+        ],
+        desktop: [
+          "Chrome aut Edge: clicca la icòna de installatione a la dèstera de la barra de addrèsses, aut apri lo menu ⋮ et elège «Install».",
+          "Safari en Mac: File → «Add to Dock».",
+          "Firefox non pòte installare sitos como applicationes: apri esta pàgina en Chrome, Edge aut Safari.",
+        ],
+      },
     },
     en: {
       navSearch: "Dictionary", navBrowse: "A–Z", navVerb: "Conjugator",
@@ -157,6 +193,34 @@
       moods: { indicativo: "indicative", subjunctivo: "subjunctive", conditionale: "conditional", imperativo: "imperative" },
       tenses: { p_i: "present", pi_i: "imperfect", pr_i: "preterite", f_i: "future", p_s: "present", pi_s: "imperfect", p1_c: "conditional I", p2_c: "conditional II", imp: "" },
       pos: Object.fromEntries(POS.map((p) => [p[0], p[2]])),
+      // translations → Wiktionary
+      dictsExternal: "External dictionaries", openNewTab: "Open in new tab", isvDict: "Interslavic dictionary",
+      // about
+      navAbout: "About the app", aboutTitle: "About the app",
+      aboutLead: "Dictionary of the Neolatino language: words in 13 languages, verb conjugations, intelligibility and community comments.",
+      aboutDeveloper: "Developed by", aboutBasedOn: "Based on", aboutFork: "a fork of the Interslavic dictionary",
+      aboutSource: "Source code", aboutData: "Data", aboutOriginal: "Original dictionary", aboutVersion: "Version",
+      // install
+      installApp: "Install dictionary", installNow: "Install",
+      installIntro: "Put the dictionary on your home screen: it opens in its own window like an app and works offline too.",
+      installTabIos: "iPhone / iPad", installTabAndroid: "Android", installTabDesktop: "Computer",
+      installSteps: {
+        ios: [
+          "Tap the Share button (a square with an arrow ↑). In Safari it is at the bottom of the screen or in the ••• menu.",
+          "Scroll down and choose “Add to Home Screen”.",
+          "Tap “Add” — the dictionary icon appears on your home screen.",
+        ],
+        android: [
+          "Open the browser menu ⋮ (top right in Chrome).",
+          "Choose “Install app” or “Add to Home screen”.",
+          "Confirm — the dictionary appears among your apps.",
+        ],
+        desktop: [
+          "Chrome or Edge: click the install icon at the right end of the address bar, or open the menu ⋮ and choose “Install”.",
+          "Safari on a Mac: File → “Add to Dock”.",
+          "Firefox cannot install websites as apps — open this page in Chrome, Edge or Safari.",
+        ],
+      },
     },
   };
 
@@ -460,13 +524,14 @@
   }
 
   // ------------------------------------------------------------------ header: menu, theme, back
-  const PAGE_OF = { search: "search", word: "search", browse: "browse", verb: "verb", activity: "activity", users: "users", user: "users", profile: "profile" };
+  const PAGE_OF = { search: "search", word: "search", browse: "browse", verb: "verb", activity: "activity", users: "users", user: "users", profile: "profile", lookups: "lookups", about: "about" };
   let currentPage = "search";
 
   hooks.menu.push(
     { name: "search", icon: "📖", label: () => t("navSearch"), href: "#/", order: 10 },
     { name: "browse", icon: "🔤", label: () => t("navBrowse"), href: "#/browse/a", order: 20 },
     { name: "verb", icon: "📝", label: () => t("navVerb"), href: "#/verb", order: 30 },
+    { name: "about", icon: "❓", label: () => t("navAbout"), href: "#/about", order: 90 },
   );
 
   function renderMenu() {
@@ -478,6 +543,8 @@
         <span class="menu-item-icon" aria-hidden="true">${m.icon}</span><span class="menu-item-text">${esc(m.label())}</span></a>`).join("") +
       `<a class="menu-item" href="https://neolatino.eu/" target="_blank" rel="noopener">
         <span class="menu-item-icon" aria-hidden="true">🌍</span><span class="menu-item-text">neolatino.eu</span><span class="menu-item-external" aria-hidden="true">↗</span></a>
+      ${isStandalone() ? "" : `<button type="button" class="menu-item menu-item--install" data-install>
+        <span class="menu-item-icon" aria-hidden="true">📲</span><span class="menu-item-text">${esc(t("installApp"))}</span></button>`}
       <div class="menu-sep" role="separator"></div>
       <div class="menu-lang"><span aria-hidden="true">🌐</span>
         <span class="seg-toggle" role="group" aria-label="Interface language">
@@ -536,6 +603,7 @@
     document.addEventListener("click", (ev) => {
       if (!ev.target.closest("#menu")) setMenuOpen(false);
       else if (ev.target.closest("a")) setMenuOpen(false);
+      if (ev.target.closest("[data-install]")) { setMenuOpen(false); install(); }
       const lang = ev.target.closest("[data-ui]");
       if (lang) {
         ui = lang.dataset.ui; store.set("nl-ui", ui);
@@ -694,10 +762,167 @@
   });
 
   function translationsHTML(e, li) {
+    const proper = /^npr/i.test(e.cat);
     const rows = LANGS.map((l, i) => (i === 0 || !e.v[i]) ? "" :
-      `<tr${i === li ? ' class="is-input"' : ""}><th scope="row">${esc(l[ui])}</th><td>${esc(e.v[i])}</td></tr>`).join("");
+      `<tr${i === li ? ' class="is-input"' : ""}><th scope="row">${esc(l[ui])}</th><td>${wordLinksHTML(e.v[i], l.code, proper)}</td></tr>`).join("");
     return `<div class="table-shell"><table class="table translations-table"><tbody>${rows}</tbody></table></div>`;
   }
+
+  // ------------------------------------------------------------------ translations → Wiktionary (as in the Interslavic dictionary)
+  // Every word of a natural language opens a small menu; "Wiktionary" shows the word's page
+  // from the Wiktionary in that language under the table. Interslavic opens the Interslavic dictionary.
+  const WIKI = { por: "pt", spa: "es", cat: "ca", oci: "oc", fra: "fr", srd: "sc", ita: "it", rum: "ro", eng: "en", sla: "isv" };
+
+  /** "colar, pegar" → two words; Sardinian "melingiana/melinzana" → two; "a/in/dae cuddae" stays one. */
+  function splitCell(value) {
+    value = String(value || "").trim();
+    const parts = (sep) => value.split(sep).map((p) => p.trim()).filter(Boolean);
+    if (value.includes(";")) return [parts(";"), "; "];
+    if (value.includes(",")) return [parts(","), ", "];
+    if (value.includes("/") && !/\s/.test(value)) return [parts("/"), " / "];
+    return [value ? [value] : [], ""];
+  }
+
+  /** The Wiktionary page name: no notes in brackets, English verbs without "to", Romanian without "a",
+   *  common words in lower case (page names are case-sensitive), proper nouns capitalized. */
+  function wikiTitle(word, wiki, proper) {
+    let s = String(word).replace(/\*/g, "");
+    s = s.startsWith("(") ? s.replace(/[()]/g, "") : s.replace(/\s*[(\[][^)\]]*[)\]]\s*/g, " ");
+    s = s.replace(/\s+/g, " ").replace(/^[\s.;:]+|[\s.;:]+$/g, "");
+    if (wiki === "en") s = s.replace(/^to\s+/, "");
+    if (wiki === "ro") s = s.replace(/^a\s+(?=\S)/, "");
+    if (!s) return "";
+    return (proper ? s[0].toLocaleUpperCase() : s[0].toLocaleLowerCase()) + s.slice(1);
+  }
+
+  function wikiUrl(word, wiki, proper) {
+    if (wiki === "isv") {
+      const clean = String(word).replace(/\*/g, "").replace(/\s*\([^)]*\)/g, "").trim();
+      return clean ? `https://interslavic.forum/slovnik/?text=${encodeURIComponent(clean)}&lang=isv-en` : "";
+    }
+    const title = wikiTitle(word, wiki, proper);
+    return title ? `https://${wiki}.wiktionary.org/wiki/${encodeURIComponent(title.replace(/ /g, "_"))}` : "";
+  }
+
+  function wordLinksHTML(value, code, proper) {
+    const wiki = WIKI[code];
+    if (!wiki) return esc(value); // Inter-Romance, Folkspraak, Frenkisch: no Wiktionary
+    const [words, sep] = splitCell(value);
+    if (!words.length) return esc(value);
+    return words.map((w) => {
+      const url = wikiUrl(w, wiki, proper);
+      return url
+        ? `<a class="wiktionary-word-link" href="${esc(url)}" target="_blank" rel="noopener" data-wlang="${esc(code)}" data-word="${esc(w)}"${proper ? " data-proper" : ""}>${esc(w)}</a>`
+        : esc(w);
+    }).join(esc(sep));
+  }
+
+  let wordMenu = null; // { el, link, rect: where the word was when the menu was placed }
+
+  function closeWordMenu() {
+    if (!wordMenu) return;
+    wordMenu.el.remove();
+    wordMenu.link.removeAttribute("aria-expanded");
+    wordMenu = null;
+  }
+
+  function openWordMenu(link, x, y) {
+    const same = wordMenu && wordMenu.link === link;
+    closeWordMenu();
+    if (same) return; // the same word again closes the menu
+    const code = link.dataset.wlang;
+    const wiki = WIKI[code];
+    const word = link.dataset.word;
+    const url = link.href;
+    const lang = LANGS[LANG_INDEX[code]][ui];
+    const items = wiki === "isv"
+      ? `<a class="dict-word-menu__item" href="${esc(url)}" target="_blank" rel="noopener" data-menu-close>
+          <span class="dict-word-menu__item-name">${esc(t("isvDict"))}</span><span class="dict-word-menu__item-kind">↗</span></a>`
+      : `<button type="button" class="dict-word-menu__item" data-wiktionary>
+          <span class="dict-word-menu__item-name">Wiktionary</span><span class="dict-word-menu__item-kind">⧉</span></button>
+        <a class="dict-word-menu__item" href="${esc(url)}" target="_blank" rel="noopener" data-menu-close>
+          <span class="dict-word-menu__item-name">${esc(t("openNewTab"))}</span><span class="dict-word-menu__item-kind">↗</span></a>`;
+    const el = document.createElement("div");
+    el.className = "dict-word-menu";
+    el.setAttribute("role", "dialog");
+    el.setAttribute("aria-label", `${lang}: ${word}`);
+    el.innerHTML = `<div class="dict-word-menu__header"><strong>${esc(word)}</strong><span>${esc(lang)}</span>
+        <button type="button" class="dict-word-menu__close" data-menu-close aria-label="${esc(t("close"))}" title="${esc(t("close"))}">&times;</button></div>
+      <div class="dict-word-menu__list"><div class="dict-word-menu__section">${esc(t("dictsExternal"))}</div>${items}</div>`;
+    document.body.appendChild(el);
+    wordMenu = { el, link, rect: link.getBoundingClientRect() };
+    link.setAttribute("aria-expanded", "true");
+    // below the click; above it when there is no room below; always inside the window
+    const box = el.getBoundingClientRect();
+    let top = y + 18;
+    if (top + box.height > innerHeight - 8) top = y - box.height - 12;
+    el.style.left = `${Math.max(8, Math.min(x, innerWidth - box.width - 8))}px`;
+    el.style.top = `${Math.max(8, top)}px`;
+    el.addEventListener("click", (ev) => {
+      if (ev.target.closest("[data-wiktionary]")) {
+        // the table was redrawn meanwhile: open the page in a new tab instead
+        if (link.isConnected) showWiktionary(link, { url, word, lang }); else window.open(url, "_blank", "noopener");
+        closeWordMenu();
+      } else if (ev.target.closest("[data-menu-close]")) closeWordMenu();
+    });
+    (el.querySelector("[data-wiktionary]") || el.querySelector(".dict-word-menu__item")).focus({ preventScroll: true });
+  }
+
+  /** The Wiktionary page inside the word's details, under the translations. */
+  function showWiktionary(link, { url, word, lang }) {
+    const details = link.closest(".results-card__details") || link.closest(".word-section");
+    if (!details) { window.open(url, "_blank", "noopener"); return; }
+    details.querySelector(".wiktionary-expansion")?.remove();
+    const box = document.createElement("div");
+    box.className = "wiktionary-expansion";
+    box.innerHTML = `<div class="wiktionary-expansion__header">
+        <span class="wiktionary-expansion__title">${esc(lang)}: <strong>${esc(word)}</strong></span>
+        <div class="wiktionary-expansion__actions">
+          <a class="wiktionary-expansion__external" href="${esc(url)}" target="_blank" rel="noopener">${esc(t("openNewTab"))} →</a>
+          <button type="button" class="wiktionary-expansion__close" aria-label="${esc(t("close"))}" title="${esc(t("close"))}">&times;</button>
+        </div></div>
+      <div class="wiktionary-expansion__content"><iframe class="wiktionary-expansion__iframe" src="${esc(url)}" title="Wiktionary: ${esc(word)}" loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe></div>`;
+    const section = link.closest(".word-section");
+    if (section) section.after(box); else details.appendChild(box);
+    box.querySelector(".wiktionary-expansion__close").addEventListener("click", () => box.remove());
+    box.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }
+
+  document.addEventListener("click", (ev) => {
+    const link = ev.target.closest(".wiktionary-word-link");
+    if (link) {
+      // ctrl / ⌘ / middle click: straight to Wiktionary in a new tab
+      if (ev.ctrlKey || ev.metaKey || ev.shiftKey || ev.button) return;
+      ev.preventDefault();
+      const r = link.getBoundingClientRect();
+      // keyboard (Enter) gives no pointer position: use the word itself
+      const x = ev.detail ? ev.clientX : r.left;
+      const y = ev.detail ? ev.clientY : r.bottom - 12;
+      openWordMenu(link, x, y);
+      return;
+    }
+    if (wordMenu && !wordMenu.el.contains(ev.target)) closeWordMenu();
+  });
+  document.addEventListener("keydown", (ev) => {
+    if (ev.key === "Escape" && wordMenu) { const link = wordMenu.link; closeWordMenu(); link.focus(); }
+  });
+  // the menu follows its word when the page scrolls (or a phone's address bar slides away),
+  // and closes when the word leaves the screen
+  function followWord() {
+    if (!wordMenu) return;
+    const { el, link } = wordMenu;
+    if (!link.isConnected) { closeWordMenu(); return; }
+    const r = link.getBoundingClientRect();
+    if (r.bottom < 0 || r.top > innerHeight) { closeWordMenu(); return; }
+    const dx = r.left - wordMenu.rect.left, dy = r.top - wordMenu.rect.top;
+    if (!dx && !dy) return;
+    wordMenu.rect = r;
+    el.style.left = `${Math.max(8, Math.min(parseFloat(el.style.left) + dx, innerWidth - el.offsetWidth - 8))}px`;
+    el.style.top = `${parseFloat(el.style.top) + dy}px`;
+  }
+  addEventListener("scroll", (ev) => { if (wordMenu && !wordMenu.el.contains(ev.target)) followWord(); }, true);
+  addEventListener("resize", followWord);
+  addEventListener("hashchange", () => closeWordMenu());
 
   function conjHTML(c) {
     const tb = NLConj.table(c.forms);
@@ -1150,6 +1375,93 @@
     });
   }
 
+  // ------------------------------------------------------------------ about
+  const INTERSLAVIC_REPO = "https://github.com/l3monardo/interslavic-hub";
+  const SOURCE_REPO = "https://github.com/l3monardo/neolatino-dictionary";
+  const ext = (href, text) => `<a href="${esc(href)}" target="_blank" rel="noopener">${esc(text)}<span class="ext" aria-hidden="true">&nbsp;↗</span></a>`;
+
+  hooks.routes.about = () => {
+    view().innerHTML = `<div class="page about-page">
+      <h1 class="page-title">❓ ${esc(t("aboutTitle"))}</h1>
+      <div class="card about-card">
+        <div class="about-card__head">
+          <img src="favicon.svg" width="56" height="56" alt="">
+          <div><h2 class="about-card__name">Dictionario Neolatino</h2><p class="about-card__lead">${esc(t("aboutLead"))}</p></div>
+        </div>
+        <dl class="about-list">
+          <div><dt>${esc(t("aboutDeveloper"))}</dt><dd><strong>Glěb Dyndar</strong> · ${ext("https://gleb.onl/", "gleb.onl")}</dd></div>
+          <div><dt>${esc(t("aboutBasedOn"))}</dt><dd>${esc(t("aboutFork"))} · ${ext(INTERSLAVIC_REPO, "GitHub")} · ${ext("https://interslavic.forum/slovnik/", "interslavic.forum/slovnik")}</dd></div>
+          <div><dt>${esc(t("aboutSource"))}</dt><dd>${ext(SOURCE_REPO, "github.com/l3monardo/neolatino-dictionary")}</dd></div>
+          <div><dt>${esc(t("aboutData"))}</dt><dd>${ext("https://neolatino.eu/", "Vía Neolatina — neolatino.eu")} · ${ext("https://neolatino.github.io/dictionario/", t("aboutOriginal"))}</dd></div>
+        </dl>
+        <div class="about-card__foot">
+          ${isStandalone() ? "" : `<button type="button" class="pill-btn pill-btn--primary" data-install>📲 ${esc(t("installApp"))}</button>`}
+          ${APP_VERSION ? `<span class="muted">${esc(t("aboutVersion"))} ${esc(APP_VERSION)}</span>` : ""}
+        </div>
+      </div>
+    </div>`;
+    window.scrollTo(0, 0);
+  };
+
+  // ------------------------------------------------------------------ install (web app)
+  // Chrome, Edge and Samsung Internet fire beforeinstallprompt once the page qualifies (manifest +
+  // service worker): it is kept and replayed from the menu. Safari and Firefox have no install API:
+  // there the button shows short instructions instead.
+  let installPrompt = null;
+  function isStandalone() {
+    try {
+      return matchMedia("(display-mode: standalone)").matches || matchMedia("(display-mode: window-controls-overlay)").matches || navigator.standalone === true;
+    } catch { return false; }
+  }
+  addEventListener("beforeinstallprompt", (ev) => { ev.preventDefault(); installPrompt = ev; });
+  addEventListener("appinstalled", () => { installPrompt = null; renderMenu(); });
+
+  function installPlatform() {
+    const ua = navigator.userAgent || "";
+    // iPadOS says it is a Mac: tell them apart by the touch screen
+    if (/iPad|iPhone|iPod/.test(ua) || (/Macintosh/.test(ua) && (navigator.maxTouchPoints || 0) > 1)) return "ios";
+    return /Android/i.test(ua) ? "android" : "desktop";
+  }
+
+  async function install() {
+    if (installPrompt) {
+      const prompt = installPrompt;
+      installPrompt = null; // a prompt can be shown only once
+      try {
+        await prompt.prompt();
+        const choice = await prompt.userChoice;
+        if (choice && choice.outcome === "accepted") renderMenu();
+        return;
+      } catch { /* fall back to the instructions */ }
+    }
+    let platform = installPlatform();
+    const tabs = [["ios", "installTabIos"], ["android", "installTabAndroid"], ["desktop", "installTabDesktop"]];
+    const steps = () => {
+      const list = t("installSteps")[platform];
+      const tag = platform === "desktop" ? "ul" : "ol";
+      return `<${tag} class="install-dialog__steps">${list.map((s) => `<li>${esc(s)}</li>`).join("")}</${tag}>`;
+    };
+    const { el } = openModal(`${dialogHeader(`<img src="favicon.svg" alt=""><span>${esc(t("installApp"))}</span>`)}
+      <div class="install-dialog__body">
+        <p class="install-dialog__intro">${esc(t("installIntro"))}</p>
+        <div class="tabs-row install-dialog__tabs" role="tablist">${tabs.map(([v, k]) =>
+          `<button type="button" role="tab" data-platform="${v}" aria-selected="${v === platform}">${esc(t(k))}</button>`).join("")}</div>
+        <div class="install-dialog__steps-box">${steps()}</div>
+      </div>`, { className: "install-dialog", label: t("installApp") });
+    el.querySelectorAll("[data-platform]").forEach((b) => b.addEventListener("click", () => {
+      platform = b.dataset.platform;
+      el.querySelectorAll("[data-platform]").forEach((x) => x.setAttribute("aria-selected", String(x === b)));
+      el.querySelector(".install-dialog__steps-box").innerHTML = steps();
+    }));
+  }
+
+  // the service worker makes the site installable and keeps a copy for when there is no connection
+  function registerServiceWorker() {
+    if (!("serviceWorker" in navigator) || !window.isSecureContext || CONFIG.serviceWorker === false) return;
+    const go = () => navigator.serviceWorker.register("sw.js").catch((err) => console.warn("Service worker:", err));
+    if (document.readyState === "complete") go(); else addEventListener("load", go);
+  }
+
   // ------------------------------------------------------------------ UI language
   function applyUI() {
     document.documentElement.lang = ui === "en" ? "en" : "art-x-neolatino";
@@ -1182,13 +1494,14 @@
     t, ui: () => ui, esc, norm, fmt, highlight, store, collator,
     addStrings, buildHash, parseHash, route, view, setNav, renderMenu,
     cardHTML, conjHTML, translationsHTML, themeText, levelBadges, panelFooter, renderDetails,
-    posGroups, sortedFor, search, setCount, isWide, select,
+    posGroups, sortedFor, search, setCount, isWide, select, wikiUrl, splitCell, isStandalone, APP_VERSION,
     toast, openModal, dialogHeader, lineSelector, pickLine,
     lastSearchHash: () => lastSearchHash,
   });
 
   // community.js / share.js register their hooks before the first render
   function start() {
+    registerServiceWorker();
     initHeader();
     applyUI();
     route();

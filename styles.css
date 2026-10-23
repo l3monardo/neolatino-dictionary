@@ -346,7 +346,7 @@ main { flex: 1 0 auto; width: 100%; outline: none; }
   transform: translate(0, -50%) scale(1);
 }
 
-.header__feeds { display: flex; min-width: 0; flex: 0 1 auto; align-items: center; gap: 8px; }
+.header__feeds { display: flex; flex: 0 0 auto; align-items: center; gap: 8px; }
 .feed-link { color: var(--primary-color); font-size: 11px; font-weight: 700; gap: 6px; padding: 4px 12px; }
 .feed-link__icon { font-size: 13px; }
 .feed-link[aria-current="page"] {
@@ -354,7 +354,8 @@ main { flex: 1 0 auto; width: 100%; outline: none; }
   background: color-mix(in srgb, var(--primary-color) 10%, var(--surface));
 }
 
-.nav-dropdown { position: relative; display: flex; flex-shrink: 0; align-items: center; gap: 8px; }
+/* when space runs out, the menu button's label shortens ("Última acti…") instead of overlapping */
+.nav-dropdown { position: relative; display: flex; min-width: 0; flex: 0 1 auto; align-items: center; gap: 8px; }
 .header .back-arrow-button { padding: 0; color: var(--text); font-size: 1.2em; }
 .header .theme-toggle { padding: 0; }
 .theme-toggle svg { width: 18px; height: 18px; }
@@ -365,9 +366,9 @@ main { flex: 1 0 auto; width: 100%; outline: none; }
 .header .account-button.active { border-color: var(--primary-color); }
 .account-button .avatar { box-shadow: none; }
 
-.header .dropdown-trigger { padding: 0 14px; font-size: var(--text-m); }
+.header .dropdown-trigger { min-width: 0; flex-shrink: 1; padding: 0 14px; font-size: var(--text-m); }
 .dropdown-trigger-icon { font-size: 1.15em; }
-.dropdown-trigger-text { overflow: hidden; max-width: 160px; text-overflow: ellipsis; }
+.dropdown-trigger-text { overflow: hidden; min-width: 0; max-width: 160px; text-overflow: ellipsis; }
 .dropdown-trigger-arrow { font-size: 0.8em; transition: transform 0.3s ease; }
 .header .dropdown-trigger[aria-expanded="true"] { border-color: var(--primary-color); }
 .dropdown-trigger[aria-expanded="true"] .dropdown-trigger-arrow { transform: rotate(180deg); }
@@ -1712,6 +1713,204 @@ a.social-links__item:hover { border-color: var(--primary-color); color: var(--pr
   .activity-columns[data-column="votes"] .activity-column--comments { display: none; }
 }
 
+/* ── translations → Wiktionary ───────────────────────────────── */
+.wiktionary-word-link {
+  color: var(--primary-color);
+  cursor: pointer;
+  text-decoration: underline dotted;
+  text-underline-offset: 2px;
+  transition: opacity 0.2s;
+}
+.wiktionary-word-link:hover, .wiktionary-word-link[aria-expanded="true"] { opacity: 0.7; }
+.dict-word-menu {
+  position: fixed;
+  z-index: 150;
+  overflow: hidden;
+  width: 280px;
+  max-width: calc(100vw - 16px);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-m);
+  background: var(--surface);
+  box-shadow: var(--shadow-2);
+  animation: slide-down 0.15s ease-out;
+}
+.dict-word-menu__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 8px 8px 12px;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: var(--text-s);
+}
+.dict-word-menu__header strong { overflow: hidden; color: var(--primary-color); font-style: italic; text-overflow: ellipsis; white-space: nowrap; }
+.dict-word-menu__header > span { flex: 1; color: var(--muted-text-color); font-size: 11px; white-space: nowrap; }
+.dict-word-menu__close {
+  display: flex;
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--muted-text-color);
+  cursor: pointer;
+  font-size: 20px;
+  line-height: 1;
+}
+.dict-word-menu__close:hover { background: var(--border-color); color: var(--primary-color); }
+.dict-word-menu__list { padding: 4px 0; }
+.dict-word-menu__section {
+  padding: 6px 12px 3px;
+  color: var(--muted-text-color);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.dict-word-menu__item {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px;
+  border: none;
+  background: none;
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--text-s);
+  text-align: start;
+  text-decoration: none !important;
+}
+.dict-word-menu__item:hover, .dict-word-menu__item:focus-visible { background: var(--surface-2); outline: none; }
+.dict-word-menu__item-name { overflow: hidden; flex: 1; text-overflow: ellipsis; white-space: nowrap; }
+.dict-word-menu__item-kind {
+  flex-shrink: 0;
+  padding: 2px 7px;
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--muted-text-color);
+  font-size: 10px;
+}
+.wiktionary-expansion {
+  overflow: hidden;
+  margin: 8px 0 4px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-m);
+  background: var(--surface);
+  animation: slide-down 0.2s ease-out;
+}
+.wiktionary-expansion__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px 8px 12px;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--surface-2);
+}
+.wiktionary-expansion__title { min-width: 0; color: var(--text); font-size: var(--text-s); }
+.wiktionary-expansion__title strong { color: var(--primary-color); font-style: italic; }
+.wiktionary-expansion__actions { display: flex; flex-shrink: 0; align-items: center; gap: 10px; }
+.wiktionary-expansion__external { color: var(--primary-color); font-size: 11px; font-weight: 600; text-decoration: none; }
+.wiktionary-expansion__external:hover { text-decoration: underline; }
+.wiktionary-expansion__close {
+  display: flex;
+  width: 26px;
+  height: 26px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--muted-text-color);
+  cursor: pointer;
+  font-size: 22px;
+  line-height: 1;
+}
+.wiktionary-expansion__close:hover { background: var(--border-color); color: var(--primary-color); }
+.wiktionary-expansion__content { height: min(500px, 65vh); background: #fff; }
+.wiktionary-expansion__iframe { display: block; width: 100%; height: 100%; border: none; }
+
+/* ── word statistics: 50 latest lookups | most looked-up words ── */
+.stats-page__hint { margin: -4px 0 10px; }
+.stats-page__switch { display: none; justify-content: center; }
+.stats-page__columns { display: grid; align-items: start; gap: 20px; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.stats-page__column { display: flex; min-width: 0; flex-direction: column; gap: 10px; padding: 14px 16px; }
+.stats-page__column-title { margin: 0; font-size: var(--text-m); }
+.stats-page__periods { align-self: flex-start; }
+.stats-page__totals { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 0; color: var(--muted-text-color); font-size: var(--text-xs); }
+.stats-page__totals:empty { display: none; }
+.stats-page__totals strong { color: var(--text); font-variant-numeric: tabular-nums; }
+.stats-page__latest, .stats-page__top { display: flex; flex-direction: column; gap: 2px; margin: 0; padding: 0; list-style: none; }
+.stats-page__latest li, .stats-page__top li {
+  display: grid;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 4px;
+  border-bottom: 1px solid color-mix(in srgb, var(--border-color) 60%, transparent);
+}
+.stats-page__latest li:last-child, .stats-page__top li:last-child { border-bottom: none; }
+.stats-page__latest li.page-hint, .stats-page__top li.page-hint { display: block; border: none; }
+/* word | times | when */
+.stats-page__latest li { grid-template-columns: minmax(0, 12em) 56px 1fr; }
+/* rank | word | bar | count: the bars line up whatever the word's length */
+.stats-page__top li { grid-template-columns: 26px minmax(0, 12em) minmax(40px, 1fr) auto; }
+.stats-page__top.loading { opacity: 0.55; }
+.stats-page .word-chip { overflow: hidden; justify-self: start; max-width: 100%; font-size: var(--text-s); text-overflow: ellipsis; white-space: nowrap; }
+.stats-page__times, .stats-page__time { color: var(--muted-text-color); font-size: 11px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.stats-page__time { justify-self: end; }
+.stats-page__rank { color: var(--muted-text-color); font-size: var(--text-xs); font-variant-numeric: tabular-nums; font-weight: 700; text-align: right; }
+.stats-page__rank.medal { color: var(--primary-color); }
+.stats-page__bar { display: block; overflow: hidden; height: 8px; border-radius: 4px; background: var(--surface-2); }
+.stats-page__bar span { display: block; height: 100%; border-radius: inherit; background: color-mix(in srgb, var(--primary-color) 70%, var(--surface)); }
+.stats-page__count { min-width: 32px; font-size: var(--text-xs); font-variant-numeric: tabular-nums; font-weight: 700; text-align: right; }
+@media (width < 900px) {
+  .stats-page__switch { display: flex; }
+  .stats-page__columns { grid-template-columns: minmax(0, 1fr); }
+  .stats-page__column-title { display: none; }
+  .stats-page__columns[data-column="latest"] .stats-page__column--top,
+  .stats-page__columns[data-column="top"] .stats-page__column--latest { display: none; }
+  .stats-page__top li { grid-template-columns: 22px minmax(0, 9em) minmax(40px, 1fr) auto; }
+  .stats-page__latest li { grid-template-columns: minmax(0, 10em) 52px 1fr; }
+}
+
+/* ── about ───────────────────────────────────────────────────── */
+.about-page .page-title { margin-bottom: 12px; }
+.about-card { display: flex; flex-direction: column; gap: 14px; }
+.about-card__head { display: flex; align-items: flex-start; gap: 14px; }
+.about-card__head img { flex-shrink: 0; border-radius: var(--radius-m); }
+.about-card__name { margin: 2px 0 4px; font-size: var(--text-l); }
+.about-card__lead { margin: 0; color: var(--muted-text-color); font-size: var(--text-s); line-height: 1.5; }
+.about-list { display: flex; flex-direction: column; margin: 0; padding-top: 6px; border-top: 1px solid var(--border-color); }
+.about-list > div { display: grid; gap: 4px 16px; grid-template-columns: 9.5em minmax(0, 1fr); padding: 9px 0; border-bottom: 1px solid color-mix(in srgb, var(--border-color) 60%, transparent); }
+.about-list dt { color: var(--muted-text-color); font-size: var(--text-xs); font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; padding-top: 2px; }
+.about-list dd { margin: 0; font-size: var(--text-s); line-height: 1.6; overflow-wrap: anywhere; }
+.about-list a { font-weight: 600; }
+.about-list .ext { color: var(--muted-text-color); font-size: 0.85em; }
+.about-card__foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.about-card__foot .muted { font-size: var(--text-xs); }
+@media (width < 560px) {
+  .about-list > div { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ── install ─────────────────────────────────────────────────── */
+.menu-item--install { width: 100%; border: none; background: none; cursor: pointer; font: inherit; font-size: var(--text-s); font-weight: 600; text-align: start; }
+.install-dialog__body { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 16px 20px 20px; overflow-y: auto; }
+.install-dialog__intro { margin: 0; font-size: var(--text-s); line-height: 1.55; text-align: center; }
+.install-dialog__tabs { max-width: 100%; flex-wrap: wrap; justify-content: center; margin: 0; background: var(--surface-2); }
+.install-dialog__tabs button { padding: 6px 14px; font-size: var(--text-xs); }
+.install-dialog__steps-box { width: 100%; }
+.install-dialog__steps { margin: 0; padding: 12px 14px 12px 34px; border-radius: var(--radius-m); background: var(--surface-2); font-size: var(--text-s); line-height: 1.5; }
+.install-dialog__steps li + li { margin-top: 8px; }
+
 /* ── footer ──────────────────────────────────────────────────── */
 .foot {
   width: 100%;
@@ -1763,6 +1962,12 @@ a.social-links__item:hover { border-color: var(--primary-color); color: var(--pr
 }
 @media (width < 380px) {
   .header, .nav-dropdown, .header__feeds { gap: 4px; }
+  /* the smallest phones (320–379 px): smaller controls so all of them fit side by side */
+  .header { --header-control-size: 36px; padding: 8px; }
+  .header .logo-button .logo-flag { width: 38px; height: 38px; }
+  .logo-flag img { width: 26px; height: 26px; }
+  .feed-link { padding: 0 8px; }
+  .header .dropdown-trigger { padding: 0 8px; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
