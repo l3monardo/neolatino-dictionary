@@ -1,0 +1,21 @@
+# Only index.php is reachable from the web; config.php and the _*.php
+# helpers are read by it, never served.
+<FilesMatch "^(config|config\.sample|_.*)\.php$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# Some servers drop the Authorization header before PHP sees it
+# (the site sends X-Auth-Token anyway; this keeps Bearer working too).
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+</IfModule>
+
+Options -Indexes

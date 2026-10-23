@@ -1,0 +1,8 @@
+# secrets: database password, session key, bot token
+api/config.php
+
+# the Telegram bot is its own repository
+neolatino-telegram-bot/
+
+# scratch image
+add-a-bot-emoji-to-the-center-of-this-image.png

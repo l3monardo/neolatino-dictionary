@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="art-x-neolatino">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dictionario Neolatino</title>
+  <meta name="description" content="Dictionario Neolatino — cercare paraulas en 13 lenguas, navigare per léttera, conjugare vèrbos, votare la intelligibilitate.">
+  <meta name="theme-color" content="#a3142b">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <script>
+    // light / dark before the first paint: the saved choice, else the system's
+    (function () {
+      var theme = null;
+      try { theme = localStorage.getItem("nl-theme"); } catch (e) { /* storage blocked */ }
+      if (theme !== "light" && theme !== "dark") {
+        theme = window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      }
+      document.documentElement.setAttribute("data-theme", theme);
+    })();
+  </script>
+  <!-- ?v=…: change it whenever you upload new files, so browsers and the CDN load them at once -->
+  <link rel="stylesheet" href="styles.css?v=20261022b">
+</head>
+<body>
+  <a class="skip" href="#main" data-i18n="skip">Saltare al contento</a>
+  <header class="header" id="header">
+    <div class="logo-button" id="logo">
+      <a class="logo-flag" href="#/" data-i18n-title="home" title="Dictionario Neolatino">
+        <img src="favicon.svg" width="34" height="34" alt="Dictionario Neolatino">
+      </a>
+      <a class="logo-text-link" href="https://neolatino.eu/" target="_blank" rel="noopener">
+        <span class="logo-text"><span class="logo-text__name">Vía Neolatina</span><span class="logo-text__dash" aria-hidden="true">—</span><span class="logo-text__site">neolatino.eu</span></span>
+      </a>
+    </div>
+    <div class="header__feeds">
+      <a class="feed-link" href="#/browse/a" data-nav="browse" data-i18n-title="navBrowse">
+        <span class="feed-link__icon" aria-hidden="true">🔤</span><span class="feed-link__text" data-i18n="navBrowse">Alphabeto</span>
+      </a>
+      <a class="feed-link" href="#/activity" data-nav="activity" data-i18n-title="navActivity">
+        <span class="feed-link__icon" aria-hidden="true">🕒</span><span class="feed-link__text" data-i18n="navActivity">Última activitate</span>
+      </a>
+    </div>
+    <div class="nav-dropdown" id="nav">
+      <button type="button" class="theme-toggle" id="theme-toggle"></button>
+      <span id="account" hidden></span>
+      <a class="back-arrow-button" id="back-button" href="#/" hidden>←</a>
+      <button type="button" class="dropdown-trigger" id="menu-button" aria-expanded="false" aria-controls="menu">
+        <span class="dropdown-trigger-icon" aria-hidden="true"></span>
+        <span class="dropdown-trigger-text"></span>
+        <span class="dropdown-trigger-arrow" aria-hidden="true">▾</span>
+      </button>
+      <nav class="menu" id="menu" aria-label="Menu"></nav>
+    </div>
+  </header>
+
+  <main id="main" tabindex="-1">
+    <div id="view"></div>
+  </main>
+
+  <footer class="foot">
+    <ul class="foot-links">
+      <li><span data-i18n="footData">Datos</span>: <a href="https://neolatino.eu/" rel="noopener">Vía Neolatina</a></li>
+      <li><a href="https://neolatino.eu/ferramentos.html" rel="noopener" data-i18n="footConj">Conjugatore officiale</a></li>
+      <li><a href="https://github.com/neolatino/dictionario" rel="noopener">GitHub</a></li>
+    </ul>
+    <p id="data-status"></p>
+  </footer>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="conjugator.js?v=20261022b"></script>
+  <script src="app.js?v=20261022b"></script>
+  <script src="community.js?v=20261022b"></script>
+  <script src="share.js?v=20261022b"></script>
+</body>
+</html>

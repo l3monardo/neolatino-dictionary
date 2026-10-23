@@ -1,0 +1,7 @@
+# Dictionario Neolatino — make updates show up at once.
+# Hostinger's CDN otherwise tells browsers to keep CSS and JS for 7 days.
+<IfModule mod_headers.c>
+  <FilesMatch "\.(html|css|js|svg)$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
+</IfModule>
